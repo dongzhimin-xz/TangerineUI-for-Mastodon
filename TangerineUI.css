@@ -1795,6 +1795,7 @@ body.app-body  {
     width: 20px;
 }
 .app-body .compose-form__buttons .icon-button:is(.active, .active:hover) {
+    color: var(--color-accent-fg);
     background-color: var(--color-accent);
 }
 .app-body .compose-form__submit {
@@ -5946,7 +5947,7 @@ div[tabindex="-1"] + div[tabindex="-1"] > .status__wrapper > .status-reply.statu
 }
 .app-body .icon-button,
 .app-body .icon-button.inverted {
-    color: var(--color-content-fg);
+    color: var(--color-accent);
 }
 .app-body .account__header__tabs__buttons .icon-button {
     padding: 6px;
