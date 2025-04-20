@@ -7461,7 +7461,7 @@ a:is(.active,
 }
 
 .layout-multiple-columns .drawer {
-    width: 280px;
+    width: 300px;
     transition: width .3s;
 }
 .layout-multiple-columns
