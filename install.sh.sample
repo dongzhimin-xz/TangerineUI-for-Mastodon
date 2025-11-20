@@ -12,10 +12,13 @@
 # • Set the TANGERINEUI and MASTODON paths below before running the script for the first time.
 # • Only run this script as the mastodon user.
 # • Use --skip-confirm to bypass all confirmation steps.
+# • Use --main to install from the latest commits on the main branch.
 # 
 #
 # /!\ This script is not suitable for Glitch-soc instances.
 
+# --- CONFIGURE PATHS BELOW ---
+# Use absolute paths
 TANGERINEUI="/home/mastodon/TangerineUI"
 MASTODON="/home/mastodon/live"
 
@@ -36,11 +39,12 @@ confirm_path() {
     esac
 }
 
-# Check for command-line arguments
 SKIP_CONFIRM=false
+MAIN_BRANCH=false
 while [[ "$#" -gt 0 ]]; do
-    case $1 in
+    case "$1" in
         --skip-confirm) SKIP_CONFIRM=true ;;
+        --main) MAIN_BRANCH=true ;;
         *) echo "Unknown parameter passed: $1" >&2; exit 1 ;;
     esac
     shift
@@ -54,13 +58,17 @@ else
     echo "Skipping path confirmation."
 fi
 
-# Navigate to the repository
+# --- STEP 1: Update Tangerine UI repo
 cd "$TANGERINEUI" || { echo "Tangerine UI repository directory not found: $TANGERINEUI" >&2; exit 1; }
 
-# Pull the latest changes from the repository
-git pull || { echo "Failed to pull latest changes from the Tangerine UI repository" >&2; exit 1; }
+# Use the latest release tag unless --main is provided, in which case use the main branch.
+if [ "$MAIN_BRANCH" = true ]; then
+    git fetch && git checkout main && git pull || { echo "Failed to pull latest changes from the Tangerine UI repository" >&2; exit 1; }
+else
+    git fetch && git checkout $(git describe --tags $(git rev-list --tags --max-count=1)) || { echo "Failed to pull latest changes from the Tangerine UI repository" >&2; exit 1; }
+fi
 
-# Copy files from the Tangerine UI repository to the Mastodon directory
+# --- STEP 2: Copy styles
 cp -r "./mastodon/app/javascript/styles/"* "$MASTODON/app/javascript/styles"
 
 # Add Tangerine UI to themes.yml if not already present
@@ -72,7 +80,7 @@ THEME_LINES=(
     "tangerineui-lagoon: styles/tangerineui-lagoon.scss"
 )
 
-# Check if the themes are already present and add missing ones
+# --- STEP 3: Update themes.yml
 if [ -f "$THEME_FILE" ]; then
     for line in "${THEME_LINES[@]}"; do
         if ! grep -Fxq "$line" "$THEME_FILE"; then
@@ -87,6 +95,11 @@ else
     exit 1
 fi
 
+# --- STEP 4: Add Tangerine UI locale file
+echo "Adding localized Tangerine UI theme names..."
+cp -r "./mastodon/config/locales/tangerineui.yml" "$MASTODON/config/locales/"
+
+# --- STEP 5: Precompile assets
 # Navigate to the Mastodon directory
 cd "$MASTODON"
 
